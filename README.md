@@ -1,1 +1,1 @@
-NewRepo
+Тестовое задание для VK MyGames
