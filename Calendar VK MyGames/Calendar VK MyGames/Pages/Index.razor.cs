@@ -73,7 +73,7 @@ namespace Calendar_VK_MyGames.Pages
                     }
                 }
 
-               Click_Task clickTaskParameter = new()
+               Click_Event clickTaskParameter = new()
                 {
                     ID_lst = listID,
                     X = e.ClientX,
@@ -82,6 +82,18 @@ namespace Calendar_VK_MyGames.Pages
 
                 //await TaskClick.InvokeAsync(clickTaskParameter);
             }
+        }
+
+        public void OpenModal()
+        {
+            modalOpened = true;
+            StateHasChanged();
+        }
+
+        public void CloseModal()
+        {
+            modalOpened = false;
+            StateHasChanged();
         }
 
         private Task Handler_DragStart(int taskID)
@@ -118,7 +130,7 @@ namespace Calendar_VK_MyGames.Pages
             List<int> listID = new();
             listID.Add(taskID);
 
-            Click_Task click_task = new()
+            Click_Event Click_Event = new()
             {
                 ID_lst = listID,
                 X = e.ClientX,

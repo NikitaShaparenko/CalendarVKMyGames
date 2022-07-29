@@ -9,11 +9,11 @@ namespace Calendar_VK_MyGames.Core
         public bool IsDraggable { get; set; } = true;
 
 
-        public enum CalendarModalCallingEvents
+        public enum CalendarModalCallingEvents //Варианты взаимодействия с задачей
         {
-            Create,
-            View,
-            Edit
+            Create, //Создать
+            View, //Просмотреть
+            Edit //Удалить
         }
 
 

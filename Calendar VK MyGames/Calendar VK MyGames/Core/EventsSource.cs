@@ -5,13 +5,13 @@ using System.Collections.Generic;
 
 namespace Calendar_VK_MyGames.Core
 {
-    public class EventsSource
+    public class EventsSource //Источник тестовых данных
     {
         public List<EventBody> GetEventsExamples()
         {
             List<EventBody> eventBodies = new List<EventBody>();
 
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 10; i++) //Генерируем 10 тестовых событий
             {
                 DateTime gen_date = GenerateDate();
                 EventBody eventBody = new EventBody
@@ -33,24 +33,22 @@ namespace Calendar_VK_MyGames.Core
 
         public int GetRandom()
         {
-            // Random rnd = new Random(1);
-            //int value = rnd.Next();
-            return 5;
+            return 5; //Не совсем честный рандом, ограничивает возможную длину фразы
         }
 
-        public string GenerateName()
+        public string GenerateName() //Создаём рыбу-текст для названия события
         {
             TextGenerator wc = new TextGenerator();
             return wc.GenerateWord(GetRandom());
         }
 
-        public string GenerateText()
+        public string GenerateText()//Создаём рыбу-текст для текста события
         {
             TextGenerator wc = new TextGenerator();
             return wc.GenerateText(GetRandom());
         }
 
-        public string GenerateColor()
+        public string GenerateColor() //Выбираем случайный цвет из коллекции
         {
 
             List<string> Colors = new List<string>();
@@ -104,7 +102,7 @@ namespace Calendar_VK_MyGames.Core
 
         }
 
-        public DateTime GenerateDate()
+        public DateTime GenerateDate() //Выбираем случайную дату
         {
             DateTime dt_current = DateTime.Now;
 
@@ -117,7 +115,7 @@ namespace Calendar_VK_MyGames.Core
             return new DateTime(dt_current.Year, dt_current.Month, new_day);
         }
 
-        public DateTime GenerateOffsetDate(DateTime start_date)
+        public DateTime GenerateOffsetDate(DateTime start_date) //И случайное смещение по дате - в билде отключены события длительностью >1 дня по умолчанию
         {
             DateTime endDate = start_date;
             int date_of_month = start_date.Day;

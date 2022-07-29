@@ -1,11 +1,11 @@
 ﻿@page "/"
 @using System.Globalization
 @inherits CalendarCore
-@inject EventsSource data_repository
+@inject EventsSource data_repository //Внедрение зависимости источника данных
 
 <PageTitle>Календарь</PageTitle>
 
-<style>
+<style> @*Центриование элементов*@
     .center-pos {
         align-items: center;
         justify-content: center;
@@ -13,16 +13,16 @@
 </style>
 
 @{
-    MonthStarted = new DateTime(MonthStarted.Year, MonthStarted.Month, 1);
-    int firstday_in_week = (int)MonthStarted.DayOfWeek;
+    MonthStarted = new DateTime(MonthStarted.Year, MonthStarted.Month, 1); //Фиксируем начало месяца
+    int firstday_in_week = (int)MonthStarted.DayOfWeek; //И первый день в неделепервого дня месяца
 
-    DayInMonthState = DayInMonthPosition.DayInMonthBefore;
-    DateTime MonthEnded = new DateTime(MonthStarted.Year, MonthStarted.Month, 1).AddMonths(1);
-    DateTime DayCounter = MonthStarted;
+    DayInMonthState = DayInMonthPosition.DayInMonthBefore; //Каретка отводится на позицию "за начало месяца"
+    DateTime MonthEnded = new DateTime(MonthStarted.Year, MonthStarted.Month, 1).AddMonths(1); //Ищем конец месяца
+    DateTime DayCounter = MonthStarted; //Заводим счётчик дней
     string? style_background = null;
-    int Offset = 0;
+    int Offset = 0; //Смещение = 0
 
-    if (EventsCollection != null)
+    if (EventsCollection != null) //Автосортировка всех событий по дате начала для красоты во время загрузки
     {
         EventsCollection = EventsCollection.OrderBy(p => p.Event_DateStart).ThenByDescending(p => p.Event_DateEnd).ToList();
     }
@@ -33,6 +33,8 @@
 <Form Model="@model">
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    @*Верхняя панель*@
 
     <div class="d-flex flex-row mb-5 center-pos">
         <div class="btn-toolbar">
@@ -72,41 +74,44 @@
         </div>
     </div>
 
-
-    @if (modalOpened)
+    @if (modalOpened) //Модальное окно
     {
         <Calendar_VK_MyGames.Components.CalendarModal ViewModel=@modal_model Event_ID=@modal_event_id EventDate=@modal_date CallingEvent=@modal_cmce OnClose=@CloseModal OnKilling=@Modal_KillEvent OnSaving=@Modal_SaveEvent/>
     }
 
-    @if (ready)
+    @if (ready) //Если загрузка завершена, то отрисовываем календарь
     {
         <div class="monthly-calendar">
 
-            @for (var i = 0; i < 7; i++)
+            @for (var i = 0; i < 7; i++) //Отрисовка шапки календаря
             {
                 int d = LocaleAdapter.NumDateConverter(i);
+
+                @*С учётом локализации*@
+
                 <span class="header-name noselect">
-                    @weekdays_short[d]
+                    @weekdays_short[d] 
                 </span>
             }
-            }
 
-            @for (int i = 0; i < 40; i++)
+            @for (int i = 0; i < 40; i++) //Отрисовка всех клеток
             {
-                if (DayInMonthState == DayInMonthPosition.DayInMonthBefore) // First empty cells part
+                if (DayInMonthState == DayInMonthPosition.DayInMonthBefore) //Если в зоне "До начала месяца"
                 {
-                    if ((int)MonthStarted.DayOfWeek == LocaleAdapter.NumDateConverter(i))  // Cell is first day?
+                    if ((int)MonthStarted.DayOfWeek == LocaleAdapter.NumDateConverter(i))  //Поиск начала отрисовки
                     {
-                        DayInMonthState = DayInMonthPosition.DayInCurrentMonth; // Start filling days
+                        DayInMonthState = DayInMonthPosition.DayInCurrentMonth; //Заполняем дни
                         var dayClick = DayCounter;
-                        style_background = DayColoring(dayClick);
+                        style_background = DayColoring(dayClick); //Отрисовываем задний фон
                         
                         
+                        @*Отрисовка тени на зоны вне текущего месяца*@
                         <div class="fade-in monthly-day noselect" style="@style_background" ondragover="event.preventDefault();" @onclick="e => ClickDay(e, dayClick)" @ondrop="() => HandleDayOnDrop(dayClick)">
                            
                             @if (DayCounter.Day == DateTime.Today.Day && current_date.Month == DateTime.Today.Month && current_date.Year == DateTime.Today.Year)
                         {
                              <font color="@CalendarCore.Style_Header_Selection">@(DayCounter.Day.ToString())</font>
+                             @*Выделение текущего дня в календаре*@
                         }
                         else
                         {
@@ -114,30 +119,31 @@
                         }
                            
                         </div>
-                        DayCounter = DayCounter.AddDays(1);
+                        DayCounter = DayCounter.AddDays(1); //Едем по календарю дальше
                         Offset = i;
                     }
                     else
                     {
-                        <div class="monthly-day fader cursor-top" @onclick="Handler_ClickOnMonthBefore"></div>
+                        <div class="monthly-day fader cursor-top" @onclick="Handler_ClickOnMonthBefore"></div> //Отрисовка зоны вне границ месяца
                     }
                 }
-                if (DayInMonthState == DayInMonthPosition.DayInCurrentMonth)
+                if (DayInMonthState == DayInMonthPosition.DayInCurrentMonth) //Отрисовка зоны текущего месяца
                 {
-                    if (DayCounter >= MonthEnded) // Stop at last day
+                    if (DayCounter >= MonthEnded) // Остановка на последнем дне месяца
                     {
                         DayInMonthState = DayInMonthPosition.DayInNextMonth;
-                        // Again empty cells from here on
+                        //Отрисовка зоны вне конца границы месяца
                         <div class="monthly-day fader cursor-bottom" @onclick="Handler_ClickOnNextMonth"></div>
                     }
                     else
                     {
+                        //Отрисвка текущего месяца
                         var _dayClick = DayCounter;
                         style_background = DayColoring(_dayClick);
                         <div class="fade-in monthly-day noselect" style="@style_background" ondragover="event.preventDefault();" @onclick="e => ClickDay(e, _dayClick)" @ondrop="() => HandleDayOnDrop(_dayClick)">
-                             @if (DayCounter.Day == DateTime.Today.Day && current_date.Month == DateTime.Today.Month && current_date.Year == DateTime.Today.Year)
+                             @if (DayCounter.Day == DateTime.Today.Day && current_date.Month == DateTime.Today.Month && current_date.Year == DateTime.Today.Year) //Если попадаем на текущий день
                         {
-                             <font color="@CalendarCore.Style_Header_Selection !important">@(DayCounter.Day.ToString())</font>
+                             <font color="@CalendarCore.Style_Header_Selection !important">@(DayCounter.Day.ToString())</font> //Выделение текущего дня
                         }
                         else
                         {
@@ -148,16 +154,16 @@
                         DayCounter = DayCounter.AddDays(1);
                     }
                 }
-                if (DayInMonthState == DayInMonthPosition.DayInNextMonth)
+                if (DayInMonthState == DayInMonthPosition.DayInNextMonth) //Обработчик клика и отрисовки зоны за границей месяца
                 {
                     <div class="monthly-day fader cursor-bottom" @onclick="Handler_ClickOnNextMonth"></div>
                 }
             }
 
 
-            @if (EventsCollection != null)
+            @if (EventsCollection != null) //Если коллекция событий не пуста, то:
             {
-                Positioner[] ev_positions = new Positioner[32];
+                Positioner[] ev_positions = new Positioner[32]; //Создаём места под 31 день коллекции
 
                 for (int i = 0; i < 32; ++i)
                 {
@@ -166,9 +172,10 @@
 
                 @foreach (EventBody ev_b in EventsCollection)
                 {
+                    //Обработчик событий попадающих в границы месяца
                     if ((ev_b.Event_DateStart.Date <= MonthStarted && MonthStarted <= ev_b.Event_DateEnd.Date) || (ev_b.Event_DateStart.Date > MonthStarted && MonthEnded > ev_b.Event_DateEnd.Date) || (ev_b.Event_DateStart < MonthEnded && MonthEnded <= ev_b.Event_DateEnd.Date))
                     {
-
+                        //Подрезаем события под границы месяца в начале
                         DateTime Event_Start = new DateTime();
                         if (ev_b.Event_DateStart.Date < MonthStarted)
                         {
@@ -179,6 +186,7 @@
                             Event_Start = ev_b.Event_DateStart.Date;
                         }
 
+                        //и в конце
                         DateTime Event_End = new DateTime();
                         if (ev_b.Event_DateEnd.Date >= MonthEnded)
                         {
@@ -189,6 +197,7 @@
                             Event_End = ev_b.Event_DateEnd.Date;
                         }
 
+                        //Служебные переменные местоположения событий
                         int event_pos_x = (Event_Start.Day + Offset - 1) % 7 + 1;
                         int event_pos_y = (Event_Start.Day + Offset - 1) / 7 + 2;
                         int event_length = (int)(Event_End.Date - Event_Start.Date).TotalDays + 1;
@@ -197,16 +206,19 @@
 
                         var ev_current_position = ev_positions[Event_Start.Day];
 
+                        //Если место наверху дня для события свободно
                         if (ev_current_position.Top == false)
                         {
                             for (int i = Event_Start.Day; i < Event_Start.Day + event_length; ++i)
                             {
+                                //То закидываем соответствующее события в него
                                 ev_positions[i].Top = true;
                             }
                             css_event_positioner = "monthly-event-first";
                         }
                         else if (ev_current_position.Center== false)
                         {
+                            //При занятом месте сверху - раскидываем событие в середину
                             for (int i = Event_Start.Day; i < Event_Start.Day + event_length; ++i)
                             {
                                 ev_positions[i].Top = true;
@@ -220,6 +232,7 @@
 
                         while (multiple_lines)
                         {
+                            //Отрисовка сетки под события
                             string row_css = $"grid-column:{event_pos_x} / span {event_length}; grid-row:{event_pos_y};";
 
                             if (css_event_positioner != null)
@@ -233,7 +246,7 @@
                                         @onclick="e => Click_Event(e, ev_b.Event_ID)"
                                         @ondragstart="() => Handler_DragStart(ev_b.Event_ID)">
 
-                                    @if (ev_b.Event_DateStart.Hour + ev_b.Event_DateStart.Minute > 0 || ev_b.Event_isAllDay == false)
+                                    @if (ev_b.Event_DateStart.Hour + ev_b.Event_DateStart.Minute > 0 || ev_b.Event_isAllDay == false) //Если у события есть временная метка - отображаем её
                                     {
                                         @(ev_b.Event_DateStart.ToString("t") + " : " + @ev_b.Event_Comment)
                                     }
@@ -243,7 +256,7 @@
                                     }
                                 </div>
                             }
-                            else
+                            else //Если много событий в дне, отображаем цифру количества событий
                             {
                                 <div class="fade-in monthly-more-event noselect"
                                      style=@($"grid-column:{event_pos_x} / span 1; grid-row:{event_pos_y}; @row_css @DayColoring(Event_Start)")
@@ -253,7 +266,7 @@
                             }
                             multiple_lines = false;
 
-                            if (event_pos_x + event_length > 8)
+                            if (event_pos_x + event_length > 8) //Если событие длится дальше, чем у нас хватает экрана, то дробим на линии ниже
                             {
                                 multiple_lines = true;
 
@@ -319,9 +332,9 @@
 
 @code {
 
-    private bool modalOpened = false;
+    private bool modalOpened = false; //Индикатор открытого модального окна
     private DateTime _MonthStarted;
-    public DateTime MonthStarted
+    public DateTime MonthStarted //Начало месяца
     {
         get
         {
@@ -334,29 +347,18 @@
         }
     }
 
-    DateTime modal_date = new DateTime();
-    int modal_event_id = 0;
-    CalendarModalCallingEvents modal_cmce = CalendarModalCallingEvents.Create;
-    EventBody modal_model;
+    DateTime modal_date = new DateTime(); //переменные для преедачи в модальное окно
+    int modal_event_id = 0; //ID события
+    CalendarModalCallingEvents modal_cmce = CalendarModalCallingEvents.Create; //Что делаем с событием
+    EventBody modal_model; //Тело события
 
-    bool ready = false;
+    bool ready = false; //Индикатор окончания загрузки
 
-    public void OpenModal()
-    {
-        modalOpened = true;
-        StateHasChanged();
-    }
-
-    public void CloseModal()
-    {
-        modalOpened = false;
-        StateHasChanged();
-    }
-
+    
     FormModel model = new FormModel();
     DayInMonthPosition DayInMonthState = DayInMonthPosition.DayInMonthBefore;
 
-    public class FormModel
+    public class FormModel //Форма для вводимых данных
     {
         public bool isDraggable { get; set; }
     }
@@ -381,11 +383,11 @@
     protected override void OnInitialized()
     {
 
-        current_date = DateTime.Now;
+        current_date = DateTime.Now; //При загрузке окна, вводим текущую дату по умолчанию
         ChangeDate(DateTime.Now.ToShortDateString());
-        EventsCollection = data_repository.GetEventsExamples();
+        EventsCollection = data_repository.GetEventsExamples(); //И получаем тестовые данные через внедрённую зависимость
 
-        ready = true;
+        ready = true; //Сигнал к рендеру экрана
         StateHasChanged();
     }
 
@@ -399,21 +401,19 @@
         DateTime dt_conv = DateTime.Parse(new_date);
     }
 
-    private void Handler_ClickOnNextMonth()
+    private void Handler_ClickOnNextMonth() //Обработчик нажатия на зону следующего месяца / Кнопки "следующий месяц"
     {
         current_date = current_date.AddMonths(1);
         StateHasChanged();
-        // MonthStarted =  MonthStarted.AddMonths(1);
     }
 
-    private void Handler_ClickOnMonthBefore()
+    private void Handler_ClickOnMonthBefore()//Обработчик нажатия на зону предыдущего месяца / Кнопки "предыдущий месяц"
     {
         current_date = current_date.AddMonths(-1);
         StateHasChanged();
-        //MonthStarted = MonthStarted.AddMonths(-1);
     }
 
-    private void Handler_ClickOnMonthToday()
+    private void Handler_ClickOnMonthToday() //Обработчик клика кнопки "Сегодня"
     {
         DateTime today = DateTime.Today;
         current_date = new DateTime(today.Year, today.Month, 1);
@@ -421,7 +421,7 @@
 
     }
 
-    private void Modal_KillEvent(int event_id)
+    private void Modal_KillEvent(int event_id) //Обработка удаления события
     {
         int i =  getEventArrID_byTaskID(event_id);
 
@@ -433,11 +433,11 @@
 
     }
 
-    private void Modal_SaveEvent(EventBody event_body)
+    private void Modal_SaveEvent(EventBody event_body) //Обработка сохранения события
     {
         int i =  getEventArrID_byTaskID(event_body.Event_ID);
 
-        if (i != int.MinValue)
+        if (i != int.MinValue) //Если такое событие уже существует, то редактируем его
         {
             EventsCollection[i].Event_Color = event_body.Event_Color;
             EventsCollection[i].Event_Comment= event_body.Event_Comment;
@@ -447,7 +447,7 @@
             EventsCollection[i].Event_Label = event_body.Event_Label;
             EventsCollection[i].Event_isAllDay = event_body.Event_isAllDay;
         }
-        else
+        else //Или создаём новое
         {
             EventBody ev_new = new EventBody();
             ev_new.Event_Color = event_body.Event_Color;

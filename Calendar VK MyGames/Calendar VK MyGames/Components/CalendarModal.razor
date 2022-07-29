@@ -1,54 +1,54 @@
 ﻿@inherits CalendarCore
 
 <Modal @bind-Open="CalendarModalOpened" Size="ModalSize.Medium" Closable="false">
-   
+
     <ModalTitle>Окно управления событием</ModalTitle>
 
     <ModalBody>
 
-      @switch(CallingEvent)
-    {
-        case CalendarModalCallingEvents.Create:
-           <h3>Создание события на @EventDate.ToShortDateString()</h3>
-            break;
+        @switch (CallingEvent)
+        {
+            case CalendarModalCallingEvents.Create: //Создание события
+                <h3>Создание события на @EventDate.ToShortDateString()</h3>
+                break;
 
-        case CalendarModalCallingEvents.Edit:
-        <h3> Редактирование события на @EventDate.ToShortDateString()</h3>
-        break;
+            case CalendarModalCallingEvents.Edit: //Редактирование события
+                <h3> Редактирование события на @EventDate.ToShortDateString()</h3>
+                break;
 
-        case CalendarModalCallingEvents.View:
-          <h3>Просмотр события на @EventDate.ToShortDateString()</h3>
-        break;
+            case CalendarModalCallingEvents.View: //Просмотр события - но в билде не используется
+                <h3>Просмотр события на @EventDate.ToShortDateString()</h3>
+                break;
 
-        default:
-          <h3>Что-то делается с событием @EventDate.ToShortDateString()</h3>
-            break;
-    }
+            default: //Отлов неожиданного поведения
+                <h3>Что-то делается с событием @EventDate.ToShortDateString()</h3>
+                break;
+        }
 
-    <p></p>
+        <p></p>
 
-            <Form Model="@model">
+        <Form Model="@model">
 
-                       <div class="form-group row mb-2">
-                                <label class="col-form-label col-lg-2 col-md-auto"><b>Название события</b></label>
-                                <div class="col-lg-10">
-                                     <input type="text" class="form-control" @bind=model.Event_Text placeholder="Название события" name="event-name"/>
-                                </div>
-                            </div>
+            <div class="form-group row mb-2">
+                <label class="col-form-label col-lg-2 col-md-auto"><b>Название события</b></label>
+                <div class="col-lg-10">
+                    <input type="text" class="form-control" @bind=model.Event_Text placeholder="Название события" name="event-name" />
+                </div>
+            </div>
 
-                            <DateTimepicker Label="Начало:" @bind-Value="@model.Event_StartDateTime" />
-                            <DateTimepicker Label="Конец:" @bind-Value="@model.Event_EndDateTime" />
+            <DateTimepicker Label="Начало:" @bind-Value="@model.Event_StartDateTime" />
+            <DateTimepicker Label="Конец:" @bind-Value="@model.Event_EndDateTime" />
 
-       <div class="row-md-6">
-               
-             
+            <div class="row-md-6">
+
+
                 <div class="row-md-auto">
-                <CheckboxContainer Label="">
-                      <Checkbox @bind-Value="@model.isAllDay" Label="Весь день" />
-                 </CheckboxContainer>
-                 </div>
-                 </div>
-            </Form>
+                    <CheckboxContainer Label="">
+                        <Checkbox @bind-Value="@model.isAllDay" Label="Весь день" />
+                    </CheckboxContainer>
+                </div>
+            </div>
+        </Form>
 
 
 
@@ -57,125 +57,82 @@
 
     <ModalFooter>
 
-        @switch(CallingEvent)
+        @switch (CallingEvent) //Кнопки в зависимости от типа действия с событием
         {
-           case CalendarModalCallingEvents.Create:
+            case CalendarModalCallingEvents.Create:
 
-           <button type="button" class="btn btn-outline-primary" @onclick=@CloseModal>Закрыть</button>
-           <button type="button" class="btn btn-outline-success" @onclick=@SaveModal>Сохранить</button>
-           
+                <button type="button" class="btn btn-outline-primary" @onclick=@CloseModal>Закрыть</button>
+                <button type="button" class="btn btn-outline-success" @onclick=@SaveModal>Сохранить</button>
+
                 break;
 
             default:
-             <button type="button" class="btn btn-outline-primary" @onclick=@CloseModal>Закрыть</button>
+                <button type="button" class="btn btn-outline-primary" @onclick=@CloseModal>Закрыть</button>
                 break;
 
-             case CalendarModalCallingEvents.Edit:
-               <button type="button" class="btn btn-outline-primary" @onclick=@CloseModal>Закрыть</button>
-           <button type="button" class="btn btn-outline-success" @onclick=@SaveModal>Сохранить</button>
-            <button type="button" class="btn btn-outline-danger" @onclick=@KillModal>Удалить</button>
-        break;
+            case CalendarModalCallingEvents.Edit:
+                <button type="button" class="btn btn-outline-primary" @onclick=@CloseModal>Закрыть</button>
+                <button type="button" class="btn btn-outline-success" @onclick=@SaveModal>Сохранить</button>
+                <button type="button" class="btn btn-outline-danger" @onclick=@KillModal>Удалить</button>
+                break;
 
         }
     </ModalFooter>
 </Modal>
 
 
-@code{
+@code {
 
     [Parameter]
-    public EventBody ViewModel {get;set;}
+    public EventBody ViewModel { get; set; } //Параметр для принятия модели - нужно при редактировании события
 
     [Parameter]
-    public int Event_ID {get;set;}
+    public int Event_ID { get; set; } //Параметр ID события
 
     [Parameter]
-    public CalendarModalCallingEvents CallingEvent { get; set; }
+    public CalendarModalCallingEvents CallingEvent { get; set; } //Параметр типа действия с событиям
 
     [Parameter]
-    public EventCallback<bool> EventCallback_Save { get; set; }
+    public DateTime EventDate { get; set; } //Параметр даты вызываемого для редактирования события
 
     [Parameter]
-    public DateTime EventDate { get; set; }
+    public EventCallback<bool> OnClose { get; set; } //Обработчик закрытия модального окна
 
     [Parameter]
-    public EventCallback<bool> OnClose { get; set; }
+    public EventCallback<EventBody> OnSaving { get; set; } //Обработчик сохранения модального окна
 
     [Parameter]
-    public EventCallback<EventBody> OnSaving { get; set; }
+    public EventCallback<int> OnKilling { get; set; } //Обработчик удаления события
 
-    [Parameter]
-    public EventCallback<int> OnKilling { get; set; }
+    FormModel model = new FormModel(); //Форма для вводимых данных
 
-    FormModel model = new FormModel();
-
-
-
-    bool CalendarModalOpened { get; set; }
+    bool CalendarModalOpened { get; set; } //Контроль отрытого состояния модального окна
 
     protected override async Task OnInitializedAsync()
     {
 
-        if (ViewModel != null && CallingEvent == CalendarModalCallingEvents.Edit)
+        if (ViewModel != null && CallingEvent == CalendarModalCallingEvents.Edit) //Для редактирования загружаются свойства события
         {
             model.Event_Text = ViewModel.Event_Comment;
             model.Event_StartDateTime = ViewModel.Event_DateStart;
             model.Event_EndDateTime = ViewModel.Event_DateEnd;
             model.isAllDay = ViewModel.Event_isAllDay;
         }
-       else{
-           model.Event_StartDateTime = EventDate;
-        model.Event_EndDateTime = EventDate;
-       }
+        else //Или создаётся новое свойство
+        {
+            model.Event_StartDateTime = EventDate;
+            model.Event_EndDateTime = EventDate;
+        }
         await InvokeAsync(StateHasChanged);
     }
 
-    private void CloseModal()
-    {
-        CalendarModalOpened = false;
-        OnClose.InvokeAsync(true);
-    }
-
-    private void KillModal()
-    {
-        OnKilling.InvokeAsync(Event_ID);
-        CloseModal();
-    }
-
-    private void SaveModal()
-    {
-        EventsSource es = new EventsSource();
-
-        if (model.Event_EndDateTime < model.Event_StartDateTime)
-        {
-            DateTime dt = model.Event_StartDateTime;
-            model.Event_StartDateTime = model.Event_EndDateTime;
-            model.Event_EndDateTime = dt;
-        }
-
-        EventBody ev_b = new EventBody
-            {
-                Event_ID = Event_ID,
-                Event_Color = es.GenerateColor(),
-                Event_Comment = model.Event_Text,
-                Event_Label = model.Event_Text,
-                Event_ForeColor = "#FFFFFF",
-                Event_DateStart = model.Event_StartDateTime,
-                Event_DateEnd = model.Event_EndDateTime,
-                Event_isAllDay = model.isAllDay,
-                
-            };
-            OnSaving.InvokeAsync(ev_b);
-            CloseModal();
-
-    }
 
     protected override void OnInitialized()
     {
-        CalendarModalOpened = true;
+        CalendarModalOpened = true; //При загрузке компонента открывается модальное окно
     }
 
-    public class FormModel
+    public class FormModel //Класс формы
     {
         public string Event_Text { get; set; }
 

@@ -26,7 +26,7 @@ namespace Calendar_VK_MyGames
         {
             services.AddRazorPages();
             services.AddServerSideBlazor();
-            services.AddSingleton<EventsSource>();
+            services.AddSingleton<EventsSource>(); //Внедрение зависимости источника тестовых данных
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
