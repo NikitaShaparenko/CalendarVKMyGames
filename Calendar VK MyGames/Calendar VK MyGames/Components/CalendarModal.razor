@@ -1,0 +1,190 @@
+﻿@inherits CalendarCore
+
+<Modal @bind-Open="CalendarModalOpened" Size="ModalSize.Medium" Closable="false">
+   
+    <ModalTitle>Окно управления событием</ModalTitle>
+
+    <ModalBody>
+
+      @switch(CallingEvent)
+    {
+        case CalendarModalCallingEvents.Create:
+           <h3>Создание события на @EventDate.ToShortDateString()</h3>
+            break;
+
+        case CalendarModalCallingEvents.Edit:
+        <h3> Редактирование события на @EventDate.ToShortDateString()</h3>
+        break;
+
+        case CalendarModalCallingEvents.View:
+          <h3>Просмотр события на @EventDate.ToShortDateString()</h3>
+        break;
+
+        default:
+          <h3>Что-то делается с событием @EventDate.ToShortDateString()</h3>
+            break;
+    }
+
+    <p></p>
+
+            <Form Model="@model">
+
+                       <div class="form-group row mb-2">
+                                <label class="col-form-label col-lg-2 col-md-auto"><b>Название события</b></label>
+                                <div class="col-lg-10">
+                                     <input type="text" class="form-control" @bind=model.Event_Text placeholder="Название события" name="event-name"/>
+                                </div>
+                            </div>
+
+                            <DateTimepicker Label="Начало:" @bind-Value="@model.Event_StartDateTime" />
+                            <DateTimepicker Label="Конец:" @bind-Value="@model.Event_EndDateTime" />
+
+       <div class="row-md-6">
+               
+             
+                <div class="row-md-auto">
+                <CheckboxContainer Label="">
+                      <Checkbox @bind-Value="@model.isAllDay" Label="Весь день" />
+                 </CheckboxContainer>
+                 </div>
+                 </div>
+            </Form>
+
+
+
+    </ModalBody>
+
+
+    <ModalFooter>
+
+        @switch(CallingEvent)
+        {
+           case CalendarModalCallingEvents.Create:
+
+           <button type="button" class="btn btn-outline-primary" @onclick=@CloseModal>Закрыть</button>
+           <button type="button" class="btn btn-outline-success" @onclick=@SaveModal>Сохранить</button>
+           
+                break;
+
+            default:
+             <button type="button" class="btn btn-outline-primary" @onclick=@CloseModal>Закрыть</button>
+                break;
+
+             case CalendarModalCallingEvents.Edit:
+               <button type="button" class="btn btn-outline-primary" @onclick=@CloseModal>Закрыть</button>
+           <button type="button" class="btn btn-outline-success" @onclick=@SaveModal>Сохранить</button>
+            <button type="button" class="btn btn-outline-danger" @onclick=@KillModal>Удалить</button>
+        break;
+
+        }
+    </ModalFooter>
+</Modal>
+
+
+@code{
+
+    [Parameter]
+    public EventBody ViewModel {get;set;}
+
+    [Parameter]
+    public int Event_ID {get;set;}
+
+    [Parameter]
+    public CalendarModalCallingEvents CallingEvent { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> EventCallback_Save { get; set; }
+
+    [Parameter]
+    public DateTime EventDate { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> OnClose { get; set; }
+
+    [Parameter]
+    public EventCallback<EventBody> OnSaving { get; set; }
+
+    [Parameter]
+    public EventCallback<int> OnKilling { get; set; }
+
+    FormModel model = new FormModel();
+
+
+
+    bool CalendarModalOpened { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        if (ViewModel != null && CallingEvent == CalendarModalCallingEvents.Edit)
+        {
+            model.Event_Text = ViewModel.Event_Comment;
+            model.Event_StartDateTime = ViewModel.Event_DateStart;
+            model.Event_EndDateTime = ViewModel.Event_DateEnd;
+            model.isAllDay = ViewModel.Event_isAllDay;
+        }
+       else{
+           model.Event_StartDateTime = EventDate;
+        model.Event_EndDateTime = EventDate;
+       }
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void CloseModal()
+    {
+        CalendarModalOpened = false;
+        OnClose.InvokeAsync(true);
+    }
+
+    private void KillModal()
+    {
+        OnKilling.InvokeAsync(Event_ID);
+        CloseModal();
+    }
+
+    private void SaveModal()
+    {
+        EventsSource es = new EventsSource();
+
+        if (model.Event_EndDateTime < model.Event_StartDateTime)
+        {
+            DateTime dt = model.Event_StartDateTime;
+            model.Event_StartDateTime = model.Event_EndDateTime;
+            model.Event_EndDateTime = dt;
+        }
+
+        EventBody ev_b = new EventBody
+            {
+                Event_ID = Event_ID,
+                Event_Color = es.GenerateColor(),
+                Event_Comment = model.Event_Text,
+                Event_Label = model.Event_Text,
+                Event_ForeColor = "#FFFFFF",
+                Event_DateStart = model.Event_StartDateTime,
+                Event_DateEnd = model.Event_EndDateTime,
+                Event_isAllDay = model.isAllDay,
+                
+            };
+            OnSaving.InvokeAsync(ev_b);
+            CloseModal();
+
+    }
+
+    protected override void OnInitialized()
+    {
+        CalendarModalOpened = true;
+    }
+
+    public class FormModel
+    {
+        public string Event_Text { get; set; }
+
+        public DateTime Event_StartDateTime { get; set; }
+
+        public DateTime Event_EndDateTime { get; set; }
+
+        public bool isAllDay { get; set; }
+
+
+    }
+}
