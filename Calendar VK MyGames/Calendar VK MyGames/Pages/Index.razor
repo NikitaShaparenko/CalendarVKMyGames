@@ -100,8 +100,19 @@
                         DayInMonthState = DayInMonthPosition.DayInCurrentMonth; // Start filling days
                         var dayClick = DayCounter;
                         style_background = DayColoring(dayClick);
+                        
+                        
                         <div class="fade-in monthly-day noselect" style="@style_background" ondragover="event.preventDefault();" @onclick="e => ClickDay(e, dayClick)" @ondrop="() => HandleDayOnDrop(dayClick)">
-                            @(DayCounter.Day.ToString())
+                           
+                            @if (DayCounter.Day == DateTime.Today.Day && current_date.Month == DateTime.Today.Month && current_date.Year == DateTime.Today.Year)
+                        {
+                             <font color="@CalendarCore.Style_Header_Selection">@(DayCounter.Day.ToString())</font>
+                        }
+                        else
+                        {
+                             @(DayCounter.Day.ToString())
+                        }
+                           
                         </div>
                         DayCounter = DayCounter.AddDays(1);
                         Offset = i;
@@ -124,7 +135,15 @@
                         var _dayClick = DayCounter;
                         style_background = DayColoring(_dayClick);
                         <div class="fade-in monthly-day noselect" style="@style_background" ondragover="event.preventDefault();" @onclick="e => ClickDay(e, _dayClick)" @ondrop="() => HandleDayOnDrop(_dayClick)">
-                            @(DayCounter.Day.ToString())
+                             @if (DayCounter.Day == DateTime.Today.Day && current_date.Month == DateTime.Today.Month && current_date.Year == DateTime.Today.Year)
+                        {
+                             <font color="@CalendarCore.Style_Header_Selection !important">@(DayCounter.Day.ToString())</font>
+                        }
+                        else
+                        {
+                             @(DayCounter.Day.ToString())
+                        }
+                           
                         </div>
                         DayCounter = DayCounter.AddDays(1);
                     }
@@ -206,6 +225,8 @@
                             if (css_event_positioner != null)
                             {
                                 <div class="fade-in monthly-event @borders cursor-pointer @css_event_positioner"
+
+                                
                                         style="@row_css @("background:" + @ev_b.Event_Color + ";color:"+ @ev_b.Event_ForeColor)"
                                         title="@ev_b.Event_Comment"
                                         draggable="@getDragabbleStatus()"
